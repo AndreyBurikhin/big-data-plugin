@@ -26,17 +26,18 @@ import org.apache.commons.lang.StringUtils;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Dialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.pentaho.di.core.Const;
-import org.pentaho.di.core.hadoop.HadoopConfigurationBootstrap;
 import org.pentaho.di.core.hadoop.HadoopSpoonPlugin;
 import org.pentaho.di.core.namedcluster.model.NamedCluster;
 import org.pentaho.di.core.plugins.LifecyclePluginType;
@@ -110,12 +111,11 @@ public class NamedClusterDialog extends Dialog {
   public String open() {
     Shell parent = getParent();
     Display display = parent.getDisplay();
-    shell = new Shell( parent, SWT.DIALOG_TRIM | SWT.CLOSE | SWT.MAX | SWT.MIN | SWT.ICON );
-    shell.setSize( 480, 550 );
-    props.setLook( shell );
+    shell = new Shell( parent, SWT.DIALOG_TRIM | SWT.RESIZE | SWT.CLOSE | SWT.MAX | SWT.MIN | SWT.ICON );
+    //props.setLook( shell );
     shell.setImage( GUIResource.getInstance().getImageSpoon() );
 
-    margin = Const.MARGIN;
+    margin = Const.FORM_MARGIN;
 
     PluginInterface plugin =
         PluginRegistry.getInstance().findPluginWithId( LifecyclePluginType.class, HadoopSpoonPlugin.PLUGIN_ID );
@@ -124,15 +124,19 @@ public class NamedClusterDialog extends Dialog {
         BaseMessages.getString( PKG, "NamedClusterDialog.Shell.Title" ));
 
     FormLayout formLayout = new FormLayout();
-    formLayout.marginWidth = Const.FORM_MARGIN;
-    formLayout.marginHeight = Const.FORM_MARGIN;
+    formLayout.marginWidth = 10;//Const.FORM_MARGIN;
+    formLayout.marginHeight = 10;//Const.FORM_MARGIN;
 
     shell.setText( BaseMessages.getString( PKG, "NamedClusterDialog.Shell.Title" ) );
-    shell.setLayout( new FormLayout() );
+    shell.setLayout( formLayout );
 
     NamedClusterComposite namedClusterComposite = new NamedClusterComposite( shell, namedCluster, props );
-    FormData fd = new FormData( 470, 480 );
+    FormData fd = new FormData();
+    fd.left = new FormAttachment(0, 0);
+    fd.right = new FormAttachment(100, 0);
     namedClusterComposite.setLayoutData( fd );
+    
+    shell.setSize( 426, 636 );
     
     // Buttons
     wOK = new Button( shell, SWT.PUSH );
@@ -143,6 +147,14 @@ public class NamedClusterDialog extends Dialog {
 
     Button[] buttons = new Button[] { wOK, wCancel };
     BaseStepDialog.positionBottomButtons( shell, buttons, margin, null );
+    
+    // Create a horizontal separator
+    Label bottomSeparator = new Label( shell, SWT.HORIZONTAL | SWT.SEPARATOR );
+    fd = new FormData( );
+    fd.bottom = new FormAttachment( 100, -( wOK.getBounds().height + 5 ) );
+    fd.left = new FormAttachment( 0, 0 );
+    fd.right = new FormAttachment( 100, 0 );
+    bottomSeparator.setLayoutData( fd );
 
     // Add listeners
     wOK.addListener( SWT.Selection, new Listener() {
