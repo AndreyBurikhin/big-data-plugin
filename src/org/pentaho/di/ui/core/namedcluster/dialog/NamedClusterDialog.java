@@ -112,7 +112,7 @@ public class NamedClusterDialog extends Dialog {
     Shell parent = getParent();
     Display display = parent.getDisplay();
     shell = new Shell( parent, SWT.DIALOG_TRIM | SWT.RESIZE | SWT.CLOSE | SWT.MAX | SWT.MIN | SWT.ICON );
-    //props.setLook( shell );
+    props.setLook( shell );
     shell.setImage( GUIResource.getInstance().getImageSpoon() );
 
     margin = Const.FORM_MARGIN;
@@ -146,12 +146,12 @@ public class NamedClusterDialog extends Dialog {
     wCancel.setText( BaseMessages.getString( PKG, "System.Button.Cancel" ) );
 
     Button[] buttons = new Button[] { wOK, wCancel };
-    BaseStepDialog.positionBottomButtons( shell, buttons, margin, null );
+    BaseStepDialog.positionBottomRightButtons( shell, buttons, margin, null );
     
     // Create a horizontal separator
     Label bottomSeparator = new Label( shell, SWT.HORIZONTAL | SWT.SEPARATOR );
     fd = new FormData( );
-    fd.bottom = new FormAttachment( 100, -( wOK.getBounds().height + 5 ) );
+    fd.bottom = new FormAttachment( 100, -( wOK.getBounds().height + 10 ) );
     fd.left = new FormAttachment( 0, 0 );
     fd.right = new FormAttachment( 100, 0 );
     bottomSeparator.setLayoutData( fd );
@@ -204,8 +204,8 @@ public class NamedClusterDialog extends Dialog {
         NamedCluster fetched = NamedClusterUIHelper.getNamedCluster( result );
         if ( fetched != null ) {
           // there already exists a cluster with the new name, ask the user
-          MessageBox mb = new MessageBox( shell, SWT.YES | SWT.NO | SWT.ICON_QUESTION );
-          mb.setText( BaseMessages.getString( PKG, "NamedClusterDialog.Warning" ) );
+          MessageBox mb = new MessageBox( shell, SWT.YES | SWT.NO | SWT.ICON_WARNING );
+          mb.setText( BaseMessages.getString( PKG, "NamedClusterDialog.ClusterNameExists.Title" ) );
           mb.setMessage( BaseMessages.getString( PKG, "NamedClusterDialog.ClusterNameExists", result ) );
           if ( SWT.NO == mb.open() ) {
             // do not exist dialog

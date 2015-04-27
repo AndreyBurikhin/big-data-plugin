@@ -54,7 +54,7 @@ public class PopupMenuFactory {
   public Menu createNewPopupMenu( final Tree selectionTree ) {
     if ( newMenu == null ) {
       newMenu = new Menu( selectionTree );
-      createPopupMenu( newMenu, BaseMessages.getString( Spoon.class, "Spoon.Menu.Popup.BASE.New" ),
+      createPopupMenu( newMenu, BaseMessages.getString( PKG, "PopupMenuFactory.NAMEDCLUSTERS.New" ),
           new NewNamedClusterCommand() );
     }
     return newMenu;
@@ -64,7 +64,7 @@ public class PopupMenuFactory {
     this.selectedNamedCluster = selectedNamedCluster;
     if ( maintMenu == null ) {
       maintMenu = new Menu( selectionTree );
-      createPopupMenu( maintMenu, BaseMessages.getString( Spoon.class, "Spoon.Menu.Popup.BASE.New" ),
+      createPopupMenu( maintMenu, BaseMessages.getString( PKG, "PopupMenuFactory.NAMEDCLUSTERS.New" ),
           new NewNamedClusterCommand() );
       createPopupMenu( maintMenu, BaseMessages.getString( PKG, "PopupMenuFactory.NAMEDCLUSTERS.Edit" ),
           new EditNamedClusterCommand() );
@@ -119,7 +119,7 @@ public class PopupMenuFactory {
 
   class DeleteNamedClusterCommand implements NamedClusterCommand {
     public void execute() {
-      MessageBox mb = new MessageBox( spoon.getShell(), SWT.YES | SWT.NO | SWT.ICON_QUESTION );
+      MessageBox mb = new MessageBox( spoon.getShell(), SWT.YES | SWT.NO | SWT.ICON_WARNING );
       mb.setMessage( BaseMessages.getString( PKG, "PopupMenuFactory.NAMEDCLUSTERS.DeleteNamedClusterAsk.Message",
           selectedNamedCluster.getName() ) );
       mb.setText( BaseMessages.getString( PKG, "PopupMenuFactory.NAMEDCLUSTERS.DeleteNamedClusterAsk.Title" ) );

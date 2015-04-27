@@ -35,7 +35,6 @@ import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
-import org.pentaho.di.core.Const;
 import org.pentaho.di.core.namedcluster.model.NamedCluster;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.ui.core.PropsUI;
@@ -50,7 +49,9 @@ public class NamedClusterComposite extends Composite {
   private GridData gridData;
   private GridData numberGridData;
   private GridData labelGridData;
+  private GridData userNameLabelGridData;
   private GridData userNameGridData;
+  private GridData passwordLabelGridData;
   private GridData passwordGridData;
   private GridData portLabelGridData;
   private GridData urlGridData;
@@ -78,13 +79,13 @@ public class NamedClusterComposite extends Composite {
     setLayoutData( fd );
     
     gridData = new GridData();
-    gridData.widthHint = 235;
+    gridData.widthHint = 270;
 
     numberGridData = new GridData();
     numberGridData.widthHint = 80;
     
     labelGridData = new GridData();
-    labelGridData.widthHint = 235;
+    labelGridData.widthHint = 270;
 
     urlGridData = new GridData();
     urlGridData.widthHint = 300;
@@ -92,11 +93,17 @@ public class NamedClusterComposite extends Composite {
     portLabelGridData = new GridData();
     portLabelGridData.widthHint = 80;
     
+    userNameLabelGridData = new GridData();
+    userNameLabelGridData.widthHint = 165;
+    
     userNameGridData = new GridData();
-    userNameGridData.widthHint = 148;
+    userNameGridData.widthHint = 165;
+    
+    passwordLabelGridData = new GridData();
+    passwordLabelGridData.widthHint = 185;
     
     passwordGridData = new GridData();
-    passwordGridData.widthHint = 148;
+    passwordGridData.widthHint = 185;
     
     processNamedCluster( this, namedCluster );
   }
@@ -113,12 +120,6 @@ public class NamedClusterComposite extends Composite {
     fd.top = new FormAttachment( confUI, 5 );
     topSeparator.setLayoutData( fd );
     
-    /*final ScrolledComposite sc1 = new ScrolledComposite( c, SWT.V_SCROLL );
-    props.setLook( sc1 );
-    fd = new FormData( 445, 360 );
-    fd.top = new FormAttachment( topSeparator, 15 );
-    sc1.setLayoutData( fd );*/
-    
     // Create a child composite to hold the controls
     final Composite c1 = new Composite( c, SWT.NONE );
     fd = new FormData();
@@ -133,8 +134,7 @@ public class NamedClusterComposite extends Composite {
     gl.marginHeight = 0;
     gl.marginWidth = 0;
     
-    c1.setLayout( gl );
-    
+    c1.setLayout( gl ); 
     
     createHdfsGroup( c1, cluster );
     createJobTrackerGroup( c1, cluster );
@@ -215,7 +215,6 @@ public class NamedClusterComposite extends Composite {
     props.setLook( pp );
     GridLayout gridLayout = new GridLayout( 1, false );
     gridLayout.marginWidth = 0;
-    gridLayout.marginHeight = 0;
     pp.setLayout( gridLayout );
     return pp;
   }
@@ -225,7 +224,6 @@ public class NamedClusterComposite extends Composite {
     props.setLook( twoColumnsComposite );
     GridLayout gridLayout = new GridLayout( 2, false );
     gridLayout.marginWidth = 0;
-    gridLayout.marginHeight = 0;
     twoColumnsComposite.setLayout( gridLayout );
     return twoColumnsComposite;
   }
@@ -234,18 +232,13 @@ public class NamedClusterComposite extends Composite {
     Composite pp = createGroup( parentComposite, BaseMessages.getString( PKG, "NamedClusterDialog.HDFS" ) );
     
     Composite hdfsRowComposite = createTwoColumnsContainer( pp );
-    
     Composite hostUIComposite = new Composite( hdfsRowComposite, SWT.NONE );
     props.setLook( hostUIComposite );
-    GridLayout cg1 = new GridLayout( 1, false );
-    cg1.marginHeight = 0;
-    hostUIComposite.setLayout( cg1 );
+    hostUIComposite.setLayout( new GridLayout( 1, false ) );
     
     Composite portUIComposite = new Composite( hdfsRowComposite, SWT.NONE );
     props.setLook( portUIComposite );
-    GridLayout cg2 = new GridLayout( 1, false );
-    cg2.marginHeight = 0;
-    portUIComposite.setLayout( cg2 );
+    portUIComposite.setLayout( new GridLayout( 1, false ) );
     
     // hdfs host label
     createLabel( hostUIComposite, BaseMessages.getString( PKG, "NamedClusterDialog.Hostname" ), labelGridData );
@@ -271,18 +264,14 @@ public class NamedClusterComposite extends Composite {
     
     Composite usernameUIComposite = new Composite( hdfsCredentialsRowComposite, SWT.NONE );
     props.setLook( usernameUIComposite );
-    GridLayout g = new GridLayout( 1, false );
-    g.marginHeight = 0;
-    usernameUIComposite.setLayout( g );
+    usernameUIComposite.setLayout( new GridLayout( 1, false ) );
     
     Composite passwordUIComposite = new Composite( hdfsCredentialsRowComposite, SWT.NONE );
     props.setLook( passwordUIComposite );
-    GridLayout g1 = new GridLayout( 1, false );
-    g1.marginHeight = 0;
-    passwordUIComposite.setLayout( g1 );
+    passwordUIComposite.setLayout( new GridLayout( 1, false ) );
     
     // hdfs user label
-    createLabel( usernameUIComposite, BaseMessages.getString( PKG, "NamedClusterDialog.Username" ), userNameGridData );
+    createLabel( usernameUIComposite, BaseMessages.getString( PKG, "NamedClusterDialog.Username" ), userNameLabelGridData );
     // hdfs user input
     Callback hdfsUsernameCB = new Callback() {
       public void invoke( NamedCluster nc, TextVar textVar, String value ) {
@@ -290,24 +279,23 @@ public class NamedClusterComposite extends Composite {
       }
     };
     createTextVar( c, usernameUIComposite, c.getHdfsUsername(), userNameGridData, TEXT_FLAGS, hdfsUsernameCB );
-    /*
+    
     // hdfs password label
-    createLabel( passwordUIComposite, BaseMessages.getString( PKG, "NamedClusterDialog.Password" ), passwordGridData );
+    createLabel( passwordUIComposite, BaseMessages.getString( PKG, "NamedClusterDialog.Password" ), passwordLabelGridData );
     // hdfs user input
     Callback hdfsPasswordCB = new Callback() {
       public void invoke( NamedCluster nc, TextVar textVar, String value ) {
         nc.setHdfsPassword( value );
       }
     };
-    createTextVar( c, passwordUIComposite, c.getHdfsPassword(), passwordGridData, PASSWORD_FLAGS, hdfsPasswordCB );*/
+    createTextVar( c, passwordUIComposite, c.getHdfsPassword(), passwordGridData, PASSWORD_FLAGS, hdfsPasswordCB );
+    
   }  
   
   private void createJobTrackerGroup( Composite parentComposite, final NamedCluster c ) {
     Composite pp = createGroup( parentComposite, BaseMessages.getString( PKG, "NamedClusterDialog.JobTracker" ) );
     
-    Composite jobTrackerRowComposite = new Composite( pp, SWT.NONE );
-    props.setLook( jobTrackerRowComposite );
-    jobTrackerRowComposite.setLayout( new GridLayout( 2, false ) );
+    Composite jobTrackerRowComposite = createTwoColumnsContainer( pp );
     
     Composite hostUIComposite = new Composite( jobTrackerRowComposite, SWT.NONE );
     props.setLook( hostUIComposite );
@@ -341,9 +329,7 @@ public class NamedClusterComposite extends Composite {
   private void createZooKeeperGroup( Composite parentComposite, final NamedCluster c ) {
     Composite pp = createGroup( parentComposite, BaseMessages.getString( PKG, "NamedClusterDialog.ZooKeeper" ) );
     
-    Composite zooKeeperRowComposite = new Composite( pp, SWT.NONE );
-    props.setLook( zooKeeperRowComposite );
-    zooKeeperRowComposite.setLayout( new GridLayout( 2, false ) );
+    Composite zooKeeperRowComposite = createTwoColumnsContainer( pp );
     
     Composite hostUIComposite = new Composite( zooKeeperRowComposite, SWT.NONE );
     props.setLook( hostUIComposite );
@@ -377,15 +363,20 @@ public class NamedClusterComposite extends Composite {
   private void createOozieGroup( Composite parentComposite, final NamedCluster c ) {
     Composite pp = createGroup( parentComposite, BaseMessages.getString( PKG, "NamedClusterDialog.Oozie" ) );
 
+    Composite container = new Composite( pp, SWT.NONE );
+    props.setLook( container );
+    GridLayout gridLayout = new GridLayout( 1, false );
+    container.setLayout( gridLayout );
+    
     // oozie label
-    createLabel( pp, BaseMessages.getString( PKG, "NamedClusterDialog.URL" ), labelGridData );
+    createLabel( container, BaseMessages.getString( PKG, "NamedClusterDialog.URL" ), labelGridData );
     // oozie url
     Callback hostCB = new Callback() {
       public void invoke( NamedCluster nc, TextVar textVar, String value ) {
         nc.setOozieUrl( value );
       }
     };
-    createTextVar( c, pp, c.getOozieUrl(), gridData, TEXT_FLAGS, hostCB );
+    createTextVar( c, container, c.getOozieUrl(), gridData, TEXT_FLAGS, hostCB );
   }     
   
 }
