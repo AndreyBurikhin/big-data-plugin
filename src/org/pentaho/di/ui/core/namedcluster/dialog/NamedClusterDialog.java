@@ -23,6 +23,7 @@
 package org.pentaho.di.ui.core.namedcluster.dialog;
 
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
@@ -62,6 +63,8 @@ import org.pentaho.metastore.api.exceptions.MetaStoreException;
 public class NamedClusterDialog extends Dialog {
   private static Class<?> PKG = NamedClusterDialog.class; // for i18n purposes, needed by Translator2!!
 
+  private static final int RESULT_NO = 1;
+  
   private Shell shell;
   private PropsUI props;
   private Button wOK, wCancel;
@@ -124,8 +127,8 @@ public class NamedClusterDialog extends Dialog {
         BaseMessages.getString( PKG, "NamedClusterDialog.Shell.Title" ));
 
     FormLayout formLayout = new FormLayout();
-    formLayout.marginWidth = 10;//Const.FORM_MARGIN;
-    formLayout.marginHeight = 10;//Const.FORM_MARGIN;
+    formLayout.marginWidth = Const.FORM_MARGIN;
+    formLayout.marginHeight = Const.FORM_MARGIN;
 
     shell.setText( BaseMessages.getString( PKG, "NamedClusterDialog.Shell.Title" ) );
     shell.setLayout( formLayout );
@@ -150,8 +153,10 @@ public class NamedClusterDialog extends Dialog {
     
     // Create a horizontal separator
     Label bottomSeparator = new Label( shell, SWT.HORIZONTAL | SWT.SEPARATOR );
-    fd = new FormData( );
-    fd.bottom = new FormAttachment( 100, -( wOK.getBounds().height + 10 ) );
+    
+    int bottomSeparatorOffset = ( wOK.getBounds().height + Const.FORM_MARGIN );
+    fd = new FormData();
+    fd.bottom = new FormAttachment( 100, -bottomSeparatorOffset );
     fd.left = new FormAttachment( 0, 0 );
     fd.right = new FormAttachment( 100, 0 );
     bottomSeparator.setLayoutData( fd );
@@ -203,11 +208,17 @@ public class NamedClusterDialog extends Dialog {
       try {
         NamedCluster fetched = NamedClusterUIHelper.getNamedCluster( result );
         if ( fetched != null ) {
+
+          String title = BaseMessages.getString( PKG, "NamedClusterDialog.ClusterNameExists.Title" );
+          String message = BaseMessages.getString( PKG, "NamedClusterDialog.ClusterNameExists", result );
+          String replaceButton = BaseMessages.getString( PKG, "NamedClusterDialog.ClusterNameExists.Replace" );
+          String doNotReplaceButton = BaseMessages.getString( PKG, "NamedClusterDialog.ClusterNameExists.DoNotReplace" );
+          MessageDialog dialog =
+              new MessageDialog( shell, title, null, message, MessageDialog.WARNING, new String[] { replaceButton,
+                doNotReplaceButton }, 0 );
+
           // there already exists a cluster with the new name, ask the user
-          MessageBox mb = new MessageBox( shell, SWT.YES | SWT.NO | SWT.ICON_WARNING );
-          mb.setText( BaseMessages.getString( PKG, "NamedClusterDialog.ClusterNameExists.Title" ) );
-          mb.setMessage( BaseMessages.getString( PKG, "NamedClusterDialog.ClusterNameExists", result ) );
-          if ( SWT.NO == mb.open() ) {
+          if ( RESULT_NO == dialog.open() ) {
             // do not exist dialog
             return;
           }

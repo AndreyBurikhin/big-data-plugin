@@ -57,7 +57,7 @@ public class HadoopClusterViewTreeExtension implements ExtensionPointInterface {
 
   private Spoon spoon = null;
   private HadoopClusterDelegate ncDelegate = null;
-  private SwtUniversalImage hadoopClusterImage = null;
+  private Image hadoopClusterImage = null;
   private static Class<?> PKG = Spoon.class; 
   public static final String
       STRING_NAMED_CLUSTERS =
@@ -112,8 +112,7 @@ public class HadoopClusterViewTreeExtension implements ExtensionPointInterface {
         continue;
       }
 
-      createTreeItem( tiNcTitle, namedCluster.getName(), hadoopClusterImage.getAsBitmapForSize( selectionTreeExtension
-          .getGuiResource().getDisplay(), ConstUI.MEDIUM_ICON_SIZE, ConstUI.MEDIUM_ICON_SIZE ) );
+      createTreeItem( tiNcTitle, namedCluster.getName(), hadoopClusterImage );
     }
   }
 
@@ -145,15 +144,16 @@ public class HadoopClusterViewTreeExtension implements ExtensionPointInterface {
     return string.toUpperCase().contains( filter.toUpperCase() );
   }
   
-  private SwtUniversalImage getHadoopClusterImage( Display display ) {
+  private Image getHadoopClusterImage( Display display ) {
     final SwtUniversalImage swtImage =
         SwtSvgImageUtil.getUniversalImage( display, getClass().getClassLoader(), "hadoop_clusters.svg" );
+    Image image = swtImage.getAsBitmapForSize( display, ConstUI.MEDIUM_ICON_SIZE, ConstUI.MEDIUM_ICON_SIZE );
     display.addListener( SWT.Dispose, new Listener() {
       public void handleEvent( Event event ) {
         swtImage.dispose();
       }
     } );
-    return swtImage;
+    return image;
   }
   
 }
