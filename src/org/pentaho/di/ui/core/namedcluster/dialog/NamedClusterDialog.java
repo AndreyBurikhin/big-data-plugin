@@ -27,6 +27,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
@@ -45,12 +46,14 @@ import org.pentaho.di.core.plugins.LifecyclePluginType;
 import org.pentaho.di.core.plugins.PluginInterface;
 import org.pentaho.di.core.plugins.PluginRegistry;
 import org.pentaho.di.i18n.BaseMessages;
+import org.pentaho.di.ui.core.ConstUI;
 import org.pentaho.di.ui.core.PropsUI;
 import org.pentaho.di.ui.core.gui.GUIResource;
 import org.pentaho.di.ui.core.gui.WindowProperty;
 import org.pentaho.di.ui.core.namedcluster.NamedClusterUIHelper;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 import org.pentaho.di.ui.util.HelpUtils;
+import org.pentaho.di.ui.util.SwtSvgImageUtil;
 import org.pentaho.metastore.api.exceptions.MetaStoreException;
 
 /**
@@ -116,7 +119,7 @@ public class NamedClusterDialog extends Dialog {
     Display display = parent.getDisplay();
     shell = new Shell( parent, SWT.DIALOG_TRIM | SWT.RESIZE | SWT.CLOSE | SWT.MAX | SWT.MIN | SWT.ICON );
     props.setLook( shell );
-    shell.setImage( GUIResource.getInstance().getImageSpoon() );
+    shell.setImage( getDialogImage( shell ) );
 
     margin = Const.FORM_MARGIN;
 
@@ -228,6 +231,11 @@ public class NamedClusterDialog extends Dialog {
       }
     }
     dispose();
+  }
+  
+  private Image getDialogImage( Shell dialog ) {
+    return SwtSvgImageUtil.getImage( dialog.getDisplay(), getClass().getClassLoader(), "hadoop_clusters.svg",
+        ConstUI.ICON_SIZE, ConstUI.ICON_SIZE );
   }
   
 }
