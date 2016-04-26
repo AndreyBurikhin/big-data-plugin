@@ -39,6 +39,9 @@ import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.exception.KettleValueException;
 import org.pentaho.di.core.exception.KettleXMLException;
+import org.pentaho.di.core.injection.Injection;
+import org.pentaho.di.core.injection.InjectionDeep;
+import org.pentaho.di.core.injection.InjectionSupported;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMeta;
 import org.pentaho.di.core.row.ValueMetaInterface;
@@ -74,6 +77,8 @@ import org.w3c.dom.Node;
 @Step( id = "AvroInput", image = "Avro.svg", name = "AvroInput.Name", description = "AvroInput.Description",
     categoryDescription = "i18n:org.pentaho.di.trans.step:BaseStep.Category.BigData",
     i18nPackageName = "org.pentaho.di.trans.steps.avroinput" )
+@InjectionSupported( localizationPrefix = "AvroInput.Injection.", groups = { "SOURCE", "SCHEMA", "AVRO_FIELDS",
+  "LOOKUP_FIELDS" } )
 public class AvroInputMeta extends BaseStepMeta implements StepMetaInterface {
 
   protected static Class<?> PKG = AvroInputMeta.class;
@@ -88,12 +93,15 @@ public class AvroInputMeta extends BaseStepMeta implements StepMetaInterface {
   public static class LookupField {
 
     /** The name of the field in the incoming rows to use for a lookup */
+    @Injection( name = "LOOKUP_FIELD_NAME", group = "LOOKUP_FIELDS" )
     public String m_fieldName = "";
 
     /** The name of the variable to hold this field's values */
+    @Injection( name = "LOOKUP_VARIABLE_NAME", group = "LOOKUP_FIELDS" )
     public String m_variableName = "";
 
     /** A default value to use if the incoming field is null */
+    @Injection( name = "LOOKUP_DEFAULT_VALUE", group = "LOOKUP_FIELDS" )
     public String m_defaultValue = "";
 
     protected String m_cleansedVariableName;
@@ -171,12 +179,15 @@ public class AvroInputMeta extends BaseStepMeta implements StepMetaInterface {
   public static class AvroField {
 
     /** the name that the field will take in the outputted kettle stream */
+    @Injection( name = "AVRO_FIELD_NAME", group = "AVRO_FIELDS" )
     public String m_fieldName = "";
 
     /** the path to the field in the avro file */
+    @Injection( name = "AVRO_FIELD_PATH", group = "AVRO_FIELDS" )
     public String m_fieldPath = "";
 
     /** the kettle type for this field */
+    @Injection( name = "AVRO_FIELD_TYPE", group = "AVRO_FIELDS" )
     public String m_kettleType = "";
 
     /** any indexed values (i.e. enum types in avro) */
@@ -616,53 +627,65 @@ public class AvroInputMeta extends BaseStepMeta implements StepMetaInterface {
   }
 
   /** The avro file to read */
+  @Injection( name = "FILE_NAME", group = "SOURCE" )
   protected String m_filename = "";
 
   /** The schema to use if not reading from a container file */
+  @Injection( name = "SCHEMA_FILE_NAME", group = "SCHEMA" )
   protected String m_schemaFilename = "";
 
   /** True if the user's avro file is json encoded rather than binary */
+  @Injection( name = "JSON_ENCODED", group = "SOURCE" )
   protected boolean m_isJsonEncoded = false;
 
   /** True if the avro to be decoded is contained in an incoming field */
+  @Injection( name = "AVRO_IN_FIELD", group = "SOURCE" )
   protected boolean m_avroInField = false;
 
   /** Holds the source field name (if decoding from an incoming field) */
+  @Injection( name = "FIELD_NAME", group = "SOURCE" )
   protected String m_avroFieldName = "";
 
   /**
    * True if the schema to be used to decode an incoming Avro object is contained in an incoming field (only applies
    * when m_avroInField == true)
    */
+  @Injection( name = "SCHEMA_IN_FIELD", group = "SCHEMA" )
   protected boolean m_schemaInField;
 
   /**
    * The name of the source field holding the avro schema (either the JSON schema itself or a path to the schema on
    * disk.
    */
+  @Injection( name = "SCHEMA_FIELD_NAME", group = "SCHEMA" )
   protected String m_schemaFieldName;
 
   /**
    * True if the value in the incoming schema field is actual a path to the schema on disk (rather than the actual
    * schema itself)
    */
+  @Injection( name = "SCHEMA_IN_FIELD_IS_PATH", group = "SCHEMA" )
   protected boolean m_schemaInFieldIsPath;
 
   /**
    * True if schemas read from incoming fields are to be cached in memory for speed
    */
+  @Injection( name = "CACHE_SCHEMA_IN_MEMORY", group = "SCHEMA" )
   protected boolean m_cacheSchemasInMemory;
 
   /**
    * True if null should be output if a specified field is not present in the Avro schema (otherwise an exception is
    * raised)
    */
+  @Injection( name = "DONT_COMPLAIN_ABOUT_MISSING_FIELDS", group = "AVRO_FIELDS" )
   protected boolean m_dontComplainAboutMissingFields;
 
   /** The fields to emit */
+  @InjectionDeep
   protected List<AvroField> m_fields;
 
   /** Incoming field values to use for lookup/substitution in avro paths */
+  @InjectionDeep
   protected List<LookupField> m_lookups;
 
   /**
