@@ -48,6 +48,7 @@ import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
+import org.pentaho.di.trans.steps.metainject.MetaInjectMeta;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -289,6 +290,20 @@ public class HBaseInput extends BaseStep implements StepInterface {
       putRow( m_data.getOutputRowMeta(), outRowData );
       return true;
     }
+  }
+
+  @Override
+  public boolean init( StepMetaInterface smi, StepDataInterface sdi ) {
+    if ( super.init( smi, sdi ) ) {
+      HBaseInputMeta meta = (HBaseInputMeta) smi;
+      try {
+        meta.applyInjection();
+        return true;
+      } catch ( KettleException e ) {
+        BaseMessages.getString( HBaseInputMeta.PKG, "Error", e );
+      }
+    }
+    return false;
   }
 
   public static int getKettleTypeByKeyType( Mapping.KeyType keyType ) {

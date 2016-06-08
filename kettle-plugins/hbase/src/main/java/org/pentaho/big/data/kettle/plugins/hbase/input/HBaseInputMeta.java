@@ -28,6 +28,8 @@ import org.pentaho.big.data.api.cluster.service.locator.NamedClusterServiceLocat
 import org.pentaho.big.data.api.initializer.ClusterInitializationException;
 import org.pentaho.big.data.kettle.plugins.hbase.NamedClusterLoadSaveUtil;
 import org.pentaho.big.data.kettle.plugins.hbase.mapping.MappingAdmin;
+import org.pentaho.big.data.kettle.plugins.hbase.mapping.MappingUtils;
+import org.pentaho.bigdata.api.hbase.ByteConversionUtil;
 import org.pentaho.bigdata.api.hbase.HBaseConnection;
 import org.pentaho.bigdata.api.hbase.HBaseService;
 import org.pentaho.bigdata.api.hbase.mapping.ColumnFilter;
@@ -44,6 +46,9 @@ import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.exception.KettleXMLException;
+import org.pentaho.di.core.injection.Injection;
+import org.pentaho.di.core.injection.InjectionDeep;
+import org.pentaho.di.core.injection.InjectionSupported;
 import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMeta;
@@ -64,6 +69,7 @@ import org.pentaho.runtime.test.RuntimeTester;
 import org.pentaho.runtime.test.action.RuntimeTestActionService;
 import org.w3c.dom.Node;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +85,7 @@ import java.util.Set;
 @Step( id = "HBaseInput", image = "HB.svg", name = "HBaseInput.Name", description = "HBaseInput.Description",
     categoryDescription = "i18n:org.pentaho.di.trans.step:BaseStep.Category.BigData",
     i18nPackageName = "org.pentaho.di.trans.steps.hbaseinput" )
+@InjectionSupported( localizationPrefix = "HBaseInput.Injection.", groups = { "OUTPUT_FIELDS", "MAPPING", "FILTER" } )
 public class HBaseInputMeta extends BaseStepMeta implements StepMetaInterface {
 
   protected static Class<?> PKG = HBaseInputMeta.class;
@@ -90,26 +97,36 @@ public class HBaseInputMeta extends BaseStepMeta implements StepMetaInterface {
   private final RuntimeTester runtimeTester;
 
   protected NamedCluster namedCluster;
+  
+  @Injection( name = "NAMED_CLUSTER_NAME" )
+  protected String namedClusterName;
 
   /** path/url to hbase-site.xml */
+  @Injection( name = "HBASE_SITE_XML_URL" )
   protected String m_coreConfigURL;
 
   /** path/url to hbase-default.xml */
+  @Injection( name = "HBASE_DEFAULT_XML_URL" )
   protected String m_defaultConfigURL;
 
   /** the name of the HBase table to read from */
+  @Injection( name = "SOURCE_TABLE_NAME" )
   protected String m_sourceTableName;
 
   /** the name of the mapping for columns/types for the source table */
+  @Injection( name = "SOURCE_MAPPING_NAME" )
   protected String m_sourceMappingName;
 
   /** Start key value for range scans */
+  @Injection( name = "START_KEY_VALUE" )
   protected String m_keyStart;
 
   /** Stop key value for range scans */
+  @Injection( name = "STOP_KEY_VALUE" )
   protected String m_keyStop;
 
   /** Scanner caching */
+  @Injection( name = "SCANNER_ROW_CACHE_SIZE" )
   protected String m_scannerCacheSize;
 
   protected transient Mapping m_cachedMapping;
@@ -118,22 +135,32 @@ public class HBaseInputMeta extends BaseStepMeta implements StepMetaInterface {
    * The selected fields to output. If null, then all fields from the mapping are output
    */
   protected List<HBaseValueMetaInterface> m_outputFields;
+  
+  @InjectionDeep
+  protected List<OutputFieldDefinition> outputFieldsDefinition;
 
   /**
    * The configured column filters. If null, then no filters are applied to the result set
    */
   protected List<ColumnFilter> m_filters;
+  
+  @InjectionDeep
+  protected List<FilterDefinition> filtersDefinition;
 
   /**
    * If true, then any matching filter will cause the row to be output, otherwise all filters have to return true before
    * the row is output
    */
+  @Injection( name = "MATCH_ANY_FILTER" )
   protected boolean m_matchAnyFilter;
 
   /**
    * The mapping to use if we are not loading one dynamically at runtime from HBase itself
    */
   protected Mapping m_mapping;
+  
+  @InjectionDeep
+  protected MappingDefinition mappingDefinition;
 
   public HBaseInputMeta( NamedClusterService namedClusterService,
                          NamedClusterServiceLocator namedClusterServiceLocator,
@@ -382,6 +409,87 @@ public class HBaseInputMeta extends BaseStepMeta implements StepMetaInterface {
       }
     }
     return vals.toString();
+  }
+
+  void applyInjection( VariableSpace space ) throws KettleException {
+    if ( namedCluster == null ) {
+      throw new KettleException( "Named Cluster is null" );
+    }
+    HBaseService hBaseService;
+    try {
+      hBaseService = namedClusterServiceLocator.getService( this.namedCluster, HBaseService.class );
+    } catch ( ClusterInitializationException e ) {
+      throw new KettleException( e );
+    }
+
+    if ( mappingDefinition != null ) {
+      m_mapping = MappingUtils.getMapping( mappingDefinition, hBaseService );
+    } else {
+      String siteConfig = m_coreConfigURL;
+      String defaultConfig = m_defaultConfigURL;
+
+      MappingAdmin mappingAdmin;
+      try {
+        mappingAdmin = MappingUtils.getMappingAdmin( hBaseService, space, siteConfig, defaultConfig );
+        m_mapping = mappingAdmin.getMapping( m_sourceTableName, m_sourceMappingName );
+      } catch ( Exception e ) {
+        throw new KettleException( e );
+      }
+    }
+    
+    HBaseValueMetaInterfaceFactory valueMetaInterfaceFactory = hBaseService.getHBaseValueMetaInterfaceFactory();
+    ColumnFilterFactory columnFilterFactory = hBaseService.getColumnFilterFactory();
+    ByteConversionUtil byteConversionUtil = hBaseService.getByteConversionUtil();
+    if ( outputFieldsDefinition != null && !outputFieldsDefinition.isEmpty() ) {
+      m_outputFields =
+          createOutputFieldsDefinition( outputFieldsDefinition, m_mapping, byteConversionUtil,
+              valueMetaInterfaceFactory );
+    }
+
+    if ( filtersDefinition != null && !filtersDefinition.isEmpty() ) {
+      m_filters = createColumnFiltersFromDefinition( filtersDefinition, columnFilterFactory );
+    }
+  }
+  
+  static List<HBaseValueMetaInterface> createOutputFieldsDefinition( List<OutputFieldDefinition> outputFieldsDefinition,
+      Mapping m_mapping, ByteConversionUtil byteConversionUtil,
+      HBaseValueMetaInterfaceFactory valueMetaInterfaceFactory ) {
+    List<HBaseValueMetaInterface> outputFields = new ArrayList<>();
+    Map<String, HBaseValueMetaInterface> columns = m_mapping.getMappedColumns();
+    for ( OutputFieldDefinition fieldDefinition : outputFieldsDefinition ) {
+      HBaseValueMetaInterface vm =
+          valueMetaInterfaceFactory.createHBaseValueMetaInterface( fieldDefinition.getFamily(), fieldDefinition
+              .getColumnName(), fieldDefinition.getAlias(), ValueMeta.getType( fieldDefinition.getHbaseType() ), -1,
+              -1 );
+      vm.setKey( fieldDefinition.isKey() );
+      vm.setConversionMask( fieldDefinition.getFormat() );
+      HBaseValueMetaInterface mappedColumn = columns.get( fieldDefinition.getAlias() );
+      if ( mappedColumn.getIndex() != null ) {
+        Object[] indexVal = mappedColumn.getIndex();
+        String indexStrign = byteConversionUtil.objectIndexValuesToString( indexVal );
+
+        Object[] vals = byteConversionUtil.stringIndexListToObjects( indexStrign );
+        vm.setIndex( vals );
+        vm.setStorageType( ValueMetaInterface.STORAGE_TYPE_INDEXED );
+      }
+      outputFields.add( vm );
+    }
+    return outputFields;
+  }
+  
+  static List<ColumnFilter> createColumnFiltersFromDefinition( List<FilterDefinition> filtersDefinition,
+      ColumnFilterFactory columnFilterFactory ) {
+    List<ColumnFilter> filters = new ArrayList<>();
+    for ( FilterDefinition filterDefinition : filtersDefinition ) {
+      ColumnFilter columnFilter = columnFilterFactory.createFilter( filterDefinition.getAlias() );
+      columnFilter.setFieldType( filterDefinition.getFieldType() );
+      columnFilter.setComparisonOperator( filterDefinition.getComparisonType() );
+      columnFilter.setConstant( filterDefinition.getConstant() );
+      columnFilter.setSignedComparison( filterDefinition.isSignedComparison() );
+      columnFilter.setFormat( filterDefinition.getFormat() );
+      filters.add( columnFilter );
+    }
+    return filters;
   }
 
   @Override public String getXML() {
