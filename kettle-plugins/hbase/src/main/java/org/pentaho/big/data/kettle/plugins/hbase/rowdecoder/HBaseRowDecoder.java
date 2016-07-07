@@ -23,6 +23,7 @@
 package org.pentaho.big.data.kettle.plugins.hbase.rowdecoder;
 
 import org.pentaho.big.data.api.cluster.service.locator.NamedClusterServiceLocator;
+import org.pentaho.big.data.kettle.plugins.hbase.input.HBaseInputMeta;
 import org.pentaho.big.data.kettle.plugins.hbase.mapping.HBaseRowToKettleTuple;
 import org.pentaho.bigdata.api.hbase.ByteConversionUtil;
 import org.pentaho.bigdata.api.hbase.HBaseService;
@@ -214,4 +215,19 @@ public class HBaseRowDecoder extends BaseStep implements StepInterface {
 
     return true;
   }
+
+  @Override
+  public boolean init( StepMetaInterface smi, StepDataInterface sdi ) {
+    if ( super.init( smi, sdi ) ) {
+      HBaseRowDecoderMeta meta = (HBaseRowDecoderMeta) smi;
+      try {
+        meta.applyInjection( this );
+        return true;
+      } catch ( KettleException e ) {
+        logError( "Error while injecting properties", e );
+      }
+    }
+    return false;
+  }
+
 }
