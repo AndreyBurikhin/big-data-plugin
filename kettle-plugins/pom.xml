@@ -21,5 +21,6 @@
     <module>sqoop</module>
     <module>hive</module>
     <module>spark</module>
+    <module>parquet</module>
   </modules>
 </project>
