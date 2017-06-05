@@ -8,6 +8,9 @@
   <bean id="parquetOutputMeta" class="org.pentaho.big.data.kettle.plugins.parquet.output.ParquetOutputMeta" scope="prototype">
     <pen:di-plugin type="org.pentaho.di.core.plugins.StepPluginType"/>
   </bean>
+  <bean id="parquetInputMeta" class="org.pentaho.big.data.kettle.plugins.parquet.input.ParquetInputMeta" scope="prototype">
+    <pen:di-plugin type="org.pentaho.di.core.plugins.StepPluginType"/>
+  </bean>
 
   <reference id="namedClusterService" interface="org.pentaho.big.data.api.cluster.NamedClusterService"/>
   <reference id="namedClusterServiceLocator" interface="org.pentaho.big.data.api.cluster.service.locator.NamedClusterServiceLocator"/>
