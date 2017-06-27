@@ -2,12 +2,15 @@ package org.pentaho.big.data.kettle.plugins.parquet.output;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -26,12 +29,13 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
-import org.pentaho.big.data.kettle.plugins.parquet.input.ParquetInputMeta;
+import org.pentaho.big.data.kettle.plugins.parquet.output.ParquetOutputDialog.FD;
 import org.pentaho.di.core.Props;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.RowMetaInterface;
@@ -41,7 +45,6 @@ import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
-import org.pentaho.di.trans.steps.textfileoutput.TextFileField;
 import org.pentaho.di.ui.core.ConstUI;
 import org.pentaho.di.ui.core.dialog.ErrorDialog;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
@@ -66,6 +69,8 @@ public class ParquetOutputDialog extends BaseStepDialog implements StepDialogInt
   private Label wlPath;
 
   private TextVar wPath;
+  
+  private PentahoFileChooser fileChooser;
 
   private Button wbBrowse;
   
@@ -229,20 +234,52 @@ public class ParquetOutputDialog extends BaseStepDialog implements StepDialogInt
     layout.marginWidth = 15;
     layout.marginHeight = 15;
     wComp.setLayout( layout );
+    
+    fileChooser = chooseFilenameComponent( wComp, "File", filePath -> {
+      DirectoryDialog dialog = new DirectoryDialog( shell, SWT.OPEN );
+      if ( filePath != null ) {
+        String fpath = transMeta.environmentSubstitute( filePath );
+        dialog.setFilterPath( fpath );
+      }
+      if ( dialog.open() != null ) {
+        return dialog.getFilterPath();
+      }
+      return null;
+    } );
+    
+    Button wOverwrite = new Button( wComp, SWT.CHECK );
+    wOverwrite.setText( BaseMessages.getString( PKG, "Overwrite existing" ) );
+    props.setLook( wOverwrite );
+    new FD( wOverwrite ).left( 0, 0 ).top( fileChooser.getControl(), 5 ).apply();
 
-    wlPath = new Label( wComp, SWT.LEFT );
-    props.setLook( wlPath );
-    wlPath.setText( BaseMessages.getString( PKG, "ParquetOutputDialog.Filename.Label" ) );
-    new FD( wlPath ).left( 0, 0 ).right( 50, 0 ).top( 0, 0 ).apply();
+    Button wCreateParent = new Button( wComp, SWT.CHECK );
+    wCreateParent.setText( BaseMessages.getString( PKG, "Create parent folder" ) );
+    props.setLook( wCreateParent );
+    new FD( wCreateParent ).left( 0, 0 ).top( wOverwrite, 5 ).apply();
 
-    wbBrowse = new Button( wComp, SWT.PUSH );
-    props.setLook( wbBrowse );
-    wbBrowse.setText( BaseMessages.getString( PKG, "System.Button.Browse" ) );
-    new FD( wbBrowse ).top( wlPath, 5 ).right( 100, 0 ).apply();
+    Button wIncludeDateTime = new Button( wComp, SWT.CHECK );
+    wIncludeDateTime.setText( BaseMessages.getString( PKG, "Include date/time in filename" ) );
+    props.setLook( wIncludeDateTime );
+    new FD( wIncludeDateTime ).left( 0, 0 ).top( wCreateParent, 5 ).apply();
 
-    wPath = new TextVar( transMeta, wComp, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
-    props.setLook( wPath );
-    new FD( wPath ).left( 0, 0 ).top( wlPath, 5 ).right( wbBrowse, -10 ).apply();
+    Label wlDateTimeFormat = new Label( wComp, SWT.LEFT );
+    props.setLook( wlDateTimeFormat );
+    wlDateTimeFormat.setText( "Date/time format" );
+    new FD( wlDateTimeFormat ).left( 0, 0 ).right( 50, 0 ).top( wIncludeDateTime, 5 ).apply();
+
+    TextVar wDateTimeFormat = new TextVar( transMeta, wComp, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    props.setLook( wDateTimeFormat );
+    new FD( wDateTimeFormat ).left( 0, 0 ).top( wlDateTimeFormat, 5 ).right( 50, 0 ).apply();
+    
+    Label wlCompressionCodec = new Label( wComp, SWT.LEFT );
+    props.setLook( wlCompressionCodec );
+    wlCompressionCodec.setText( "Compression Codec" );
+    new FD( wlCompressionCodec ).left( 0, 0 ).right( 50, 0 ).top( wDateTimeFormat, 5 ).apply();
+    
+    CCombo wCompressionCodec = new CCombo( wComp, SWT.BORDER );
+    props.setLook( wCompressionCodec );
+    wCompressionCodec.add( "Parquet 1.0" );
+    new FD( wCompressionCodec ).left( 0, 0 ).right( 50, 0 ).top( wlCompressionCodec, 5 ).apply();
 
     new FD( wComp ).left( 0, 0 ).top( 0, 0 ).right( 100, 0 ).bottom( 100, 0 ).apply();
     wComp.pack();
@@ -255,21 +292,6 @@ public class ParquetOutputDialog extends BaseStepDialog implements StepDialogInt
     wSComp.setMinHeight( bounds.height );
 
     wTab.setControl( wSComp );
-
-    wbBrowse.addSelectionListener( new SelectionAdapter() {
-      public void widgetSelected( SelectionEvent e ) {
-        DirectoryDialog dialog = new DirectoryDialog( shell, SWT.OPEN );
-        if ( wPath.getText() != null ) {
-          String fpath = transMeta.environmentSubstitute( wPath.getText() );
-          dialog.setFilterPath( fpath );
-        }
-
-        if ( dialog.open() != null ) {
-          String str = dialog.getFilterPath();
-          wPath.setText( str );
-        }
-      }
-    } );
   }
 
   private void addFieldsTab( CTabFolder wTabFolder ) {
@@ -423,7 +445,7 @@ public class ParquetOutputDialog extends BaseStepDialog implements StepDialogInt
    */
   protected void getData( ParquetOutputMeta meta ) {
     if ( meta.getFilename() != null ) {
-      wPath.setText( meta.getFilename() );
+      fileChooser.setFilename( meta.getFilename() );
     }
 
     int nrFields = meta.getOutputFields().size();
@@ -459,7 +481,7 @@ public class ParquetOutputDialog extends BaseStepDialog implements StepDialogInt
    * Fill meta object from UI options.
    */
   protected void getInfo( ParquetOutputMeta meta, boolean preview ) {
-    meta.setFilename( wPath.getText() );
+    meta.setFilename( fileChooser.getFilename() );
 
     int nrFields = wOutputFields.nrNonEmpty();
 
@@ -474,6 +496,16 @@ public class ParquetOutputDialog extends BaseStepDialog implements StepDialogInt
       outputFields.add( outputField );
     }
     meta.setOutputFields( outputFields );
+  }
+
+  protected PentahoFileChooser chooseFilenameComponent( Composite parent, String blockTitle,
+      Function<String, String> browseFileFunction ) {
+    return chooseFilenameComponent( parent, null, blockTitle, browseFileFunction );
+  }
+  
+  protected PentahoFileChooser chooseFilenameComponent( Composite parent, Control after, String blockTitle,
+      Function<String, String> browseFileFunction ) {
+    return new PentahoFileChooser( props, parent, blockTitle, transMeta, browseFileFunction );
   }
 
   /**
@@ -520,6 +552,11 @@ public class ParquetOutputDialog extends BaseStepDialog implements StepDialogInt
 
     public FD left( int numerator, int offset ) {
       fd.left = new FormAttachment( numerator, offset );
+      return this;
+    }
+    
+    public FD left( Control control, int offset ) {
+      fd.left = new FormAttachment( control, offset );
       return this;
     }
 
