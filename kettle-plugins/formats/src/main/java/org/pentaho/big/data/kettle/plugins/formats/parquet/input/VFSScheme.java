@@ -22,18 +22,23 @@
 
 package org.pentaho.big.data.kettle.plugins.formats.parquet.input;
 
-import java.util.List;
+public class VFSScheme {
 
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.parquet.hadoop.ParquetInputFormat;
-import org.pentaho.di.core.row.RowMetaInterface;
-import org.pentaho.di.trans.steps.file.BaseFileInputStepData;
+  private final String scheme;
 
-public class ParquetInputData extends BaseFileInputStepData {
-  ParquetInputFormat input;
-  List<InputSplit> splits;
-  int currentSplit;
-  RecordReader reader;
-  RowMetaInterface outputRowMeta;
+  private final String schemeName;
+
+  public VFSScheme( String scheme, String schemeName ) {
+    this.scheme = scheme;
+    this.schemeName = schemeName;
+  }
+
+  public String getScheme() {
+    return scheme;
+  }
+
+  public String getSchemeName() {
+    return schemeName;
+  }
+
 }
