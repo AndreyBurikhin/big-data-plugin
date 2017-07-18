@@ -22,8 +22,25 @@
 
 package org.pentaho.big.data.kettle.plugins.formats.parquet.input;
 
+import java.lang.reflect.Field;
+import java.util.Map;
+
 import org.apache.commons.vfs2.FileObject;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocalFileSystem;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
+import org.apache.parquet.example.data.Group;
+import org.apache.parquet.hadoop.ParquetInputFormat;
+import org.apache.parquet.schema.Type;
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.row.RowMeta;
+import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.core.row.value.ValueMetaFactory;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.StepDataInterface;
@@ -39,7 +56,7 @@ public class ParquetInput extends BaseFileInputStep<ParquetInputMetaBase, Parque
     super( stepMeta, stepDataInterface, copyNr, transMeta, trans );
 
     // dirty hack for inialize file: filesystem
- /*   try {
+    try {
       Field f = FileSystem.class.getDeclaredField( "SERVICE_FILE_SYSTEMS" );
       f.setAccessible( true );
       Map<String, Object> m = (Map) f.get( FileSystem.class );
@@ -47,13 +64,13 @@ public class ParquetInput extends BaseFileInputStep<ParquetInputMetaBase, Parque
       System.out.println( "-------------------------- local filesystem initialized" );
     } catch ( Exception ex ) {
       ex.printStackTrace();
-    }*/
+    }
   }
 
   @Override
   public boolean processRow( StepMetaInterface smi, StepDataInterface sdi ) throws KettleException {
-    throw new KettleException( "Requires Shim API changes" );
-    /* ParquetInputData data = (ParquetInputData) sdi;
+    //throw new KettleException( "Requires Shim API changes" );
+    ParquetInputData data = (ParquetInputData) sdi;
 
     try {
       if ( data.splits == null ) {
@@ -86,14 +103,18 @@ public class ParquetInput extends BaseFileInputStep<ParquetInputMetaBase, Parque
       return true;
     } catch ( Exception ex ) {
       throw new KettleException( ex );
-    }*/
+    }
   }
 
   void initFiles( ParquetInputData data ) throws Exception {
-    throw new KettleException( "Requires Shim API changes" );
-    /* data.input = new ParquetInputFormat<>( PentahoParquetReadSupport.class );
+    //throw new KettleException( "Requires Shim API changes" );
+    data.input = new ParquetInputFormat<>( PentahoParquetReadSupport.class );
     Job job = new Job();
-    job.getConfiguration().set( FileInputFormat.INPUT_DIR, meta.dir );
+    if ( meta.inputFiles.fileName.length == 0 ) {
+      throw new KettleException( "No input file specified!" );
+    }
+    String fileName = environmentSubstitute( meta.inputFiles.fileName[0] );
+    job.getConfiguration().set( FileInputFormat.INPUT_DIR, fileName );
     job.getConfiguration().set( ParquetInputFormat.SPLIT_MAXSIZE, "10000000" );
     job.getConfiguration().set( ParquetInputFormat.TASK_SIDE_METADATA, "false" );
 
@@ -104,18 +125,18 @@ public class ParquetInput extends BaseFileInputStep<ParquetInputMetaBase, Parque
     for ( Type t : PentahoParquetReadSupport.schema.getFields() ) {
       ValueMetaInterface v = ValueMetaFactory.createValueMeta( t.getName(), ValueMetaInterface.TYPE_STRING );
       data.outputRowMeta.addValueMeta( v );
-    }*/
+    }
   }
 
   void openReader( ParquetInputData data ) throws Exception {
-    throw new KettleException( "Requires Shim API changes" );
-    /*Configuration c = new Configuration();
+    //throw new KettleException( "Requires Shim API changes" );
+    Configuration c = new Configuration();
     TaskAttemptID id = new TaskAttemptID();
     TaskAttemptContextImpl task = new TaskAttemptContextImpl( c, id );
 
     InputSplit sp = data.splits.get( data.currentSplit );
     data.reader = data.input.createRecordReader( sp, task );
-    data.reader.initialize( sp, task );*/
+    data.reader.initialize( sp, task );
   }
 
   @Override
