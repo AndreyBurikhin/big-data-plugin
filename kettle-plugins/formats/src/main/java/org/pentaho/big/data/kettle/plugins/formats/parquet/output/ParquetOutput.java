@@ -94,6 +94,10 @@ public class ParquetOutput extends BaseStep implements StepInterface {
     data.output = formatService.getOutputFormat();
     data.output.setOutputDir( meta.getFilename() );
     data.output.setSchema( schema );
+    // row group size in Mb
+    data.output.setRowGroupSize( meta.getRowGroupSize() * 1024 * 1024 );
+    // data page size in Kbytes
+    data.output.setDataPageSize( meta.getPageSize() * 1024 );
     data.output.setVersion(  PentahoOutputFormat.VERSION.VERSION_2_0 );
     data.output.setEncoding( PentahoOutputFormat.ENCODING.PLAIN );
     data.writer = data.output.createRecordWriter();
