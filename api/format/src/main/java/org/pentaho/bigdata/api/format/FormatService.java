@@ -21,15 +21,12 @@
  ******************************************************************************/
 package org.pentaho.bigdata.api.format;
 
-import org.pentaho.hadoop.shim.api.Configuration;
-import org.pentaho.hadoop.shim.api.format.PentahoInputFormat;
-import org.pentaho.hadoop.shim.api.format.PentahoOutputFormat;
+import org.pentaho.hadoop.shim.api.format.IPentahoParquetInputFormat;
+import org.pentaho.hadoop.shim.api.format.IPentahoParquetOutputFormat;
 
 public interface FormatService {
 
-  PentahoInputFormat getInputFormat();
+  IPentahoParquetInputFormat getInputFormat() throws Exception;
 
-  PentahoOutputFormat getOutputFormat();
-
-  Configuration createConfiguration(); // TODO remove conf ?
+  IPentahoParquetOutputFormat getOutputFormat() throws Exception;
 }

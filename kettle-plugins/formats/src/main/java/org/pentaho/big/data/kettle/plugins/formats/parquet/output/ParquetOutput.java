@@ -37,7 +37,7 @@ import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
-import org.pentaho.hadoop.shim.api.format.PentahoOutputFormat;
+import org.pentaho.hadoop.shim.api.format.IPentahoParquetOutputFormat;
 import org.pentaho.hadoop.shim.api.format.SchemaDescription;
 
 public class ParquetOutput extends BaseStep implements StepInterface {
@@ -56,24 +56,30 @@ public class ParquetOutput extends BaseStep implements StepInterface {
 
   @Override
   public synchronized boolean processRow( StepMetaInterface smi, StepDataInterface sdi ) throws KettleException {
-    if ( data.output == null ) {
-      init();
-    }
+    try {
+      if ( data.output == null ) {
+        init();
+      }
 
-    Object[] currentRow = getRow();
-    if ( currentRow != null ) {
-      RowMetaAndData row = new RowMetaAndData( getInputRowMeta(), currentRow );
-      data.writer.write( row );
-      return true;
-    } else {
-      // no more input to be expected...
-      closeWriter();
-      setOutputDone();
-      return false;
+      Object[] currentRow = getRow();
+      if ( currentRow != null ) {
+        RowMetaAndData row = new RowMetaAndData( getInputRowMeta(), currentRow );
+        data.writer.write( row );
+        return true;
+      } else {
+        // no more input to be expected...
+        closeWriter();
+        setOutputDone();
+        return false;
+      }
+    } catch ( KettleException ex ) {
+      throw ex;
+    } catch ( Exception ex ) {
+      throw new KettleException( ex );
     }
   }
 
-  public void init() throws KettleException {
+  public void init() throws Exception {
     FormatService formatService;
     try {
       formatService = namedClusterServiceLocator.getService( meta.getNamedCluster(), FormatService.class );
@@ -94,8 +100,8 @@ public class ParquetOutput extends BaseStep implements StepInterface {
     data.output = formatService.getOutputFormat();
     data.output.setOutputFile( meta.getFilename() );
     data.output.setSchema( schema );
-    data.output.setVersion(  PentahoOutputFormat.VERSION.VERSION_2_0 );
-    data.output.setEncoding( PentahoOutputFormat.ENCODING.PLAIN );
+    data.output.setVersion( IPentahoParquetOutputFormat.VERSION.VERSION_2_0 );
+    data.output.setEncoding( IPentahoParquetOutputFormat.ENCODING.PLAIN );
     data.writer = data.output.createRecordWriter();
   }
 

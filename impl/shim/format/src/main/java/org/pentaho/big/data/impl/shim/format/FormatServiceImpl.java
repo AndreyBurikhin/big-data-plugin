@@ -25,9 +25,8 @@ import org.pentaho.big.data.api.cluster.NamedCluster;
 import org.pentaho.bigdata.api.format.FormatService;
 import org.pentaho.hadoop.shim.ConfigurationException;
 import org.pentaho.hadoop.shim.HadoopConfiguration;
-import org.pentaho.hadoop.shim.api.Configuration;
-import org.pentaho.hadoop.shim.api.format.PentahoInputFormat;
-import org.pentaho.hadoop.shim.api.format.PentahoOutputFormat;
+import org.pentaho.hadoop.shim.api.format.IPentahoParquetInputFormat;
+import org.pentaho.hadoop.shim.api.format.IPentahoParquetOutputFormat;
 import org.pentaho.hadoop.shim.spi.FormatShim;
 
 public class FormatServiceImpl implements FormatService {
@@ -44,17 +43,12 @@ public class FormatServiceImpl implements FormatService {
   }
 
   @Override
-  public PentahoInputFormat getInputFormat() {
-    return formatShim.createInputFormat( FormatShim.FormatType.PARQUET );
+  public IPentahoParquetInputFormat getInputFormat() throws Exception {
+    return formatShim.createInputFormat( IPentahoParquetInputFormat.class );
   }
 
   @Override
-  public PentahoOutputFormat getOutputFormat() {
-    return formatShim.createOutputFormat( FormatShim.FormatType.PARQUET );
-  }
-
-  @Override
-  public Configuration createConfiguration() { // TODO remove conf ?
-    return hadoopConfiguration.getHadoopShim().createConfiguration();
+  public IPentahoParquetOutputFormat getOutputFormat() throws Exception {
+    return formatShim.createOutputFormat( IPentahoParquetOutputFormat.class );
   }
 }

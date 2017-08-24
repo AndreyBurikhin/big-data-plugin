@@ -35,7 +35,7 @@ import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
 import org.pentaho.di.trans.steps.file.BaseFileInputStep;
 import org.pentaho.di.trans.steps.file.IBaseFileInputReader;
-import org.pentaho.hadoop.shim.api.format.PentahoInputSplit;
+import org.pentaho.hadoop.shim.api.format.IPentahoInputFormat.IPentahoInputSplit;
 import org.pentaho.hadoop.shim.api.format.SchemaDescription;
 
 public class ParquetInput extends BaseFileInputStep<ParquetInputMeta, ParquetInputData> {
@@ -79,6 +79,8 @@ public class ParquetInput extends BaseFileInputStep<ParquetInputMeta, ParquetInp
         data.currentSplit++;
         return true;
       }
+    } catch ( KettleException ex ) {
+      throw ex;
     } catch ( Exception ex ) {
       throw new KettleException( ex );
     }
@@ -107,7 +109,7 @@ public class ParquetInput extends BaseFileInputStep<ParquetInputMeta, ParquetInp
 
   void openReader( ParquetInputData data ) throws Exception {
     logDebug( "Open split {0}", data.currentSplit );
-    PentahoInputSplit sp = data.splits.get( data.currentSplit );
+    IPentahoInputSplit sp = data.splits.get( data.currentSplit );
     data.reader = data.input.createRecordReader( sp );
     data.rowIterator = data.reader.iterator();
   }
