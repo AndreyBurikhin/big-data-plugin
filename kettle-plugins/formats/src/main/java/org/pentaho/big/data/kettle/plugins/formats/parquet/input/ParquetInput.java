@@ -28,6 +28,7 @@ import org.pentaho.big.data.kettle.plugins.formats.FormatInputField;
 import org.pentaho.bigdata.api.format.FormatService;
 import org.pentaho.di.core.RowMetaAndData;
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.vfs.KettleVFS;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.StepDataInterface;
@@ -100,6 +101,17 @@ public class ParquetInput extends BaseFileInputStep<ParquetInputMeta, ParquetInp
     data.input = formatService.getInputFormat();
     data.input.setSchema( schema );
     data.input.setInputFile( meta.inputFiles.fileName[0] );
+     
+    //TODO check if kVFSObject already contains hdfs path!
+    FileObject kVFSObject = KettleVFS.getFileObject( meta.inputFiles.fileName[0] );
+    org.apache.commons.vfs2.FileSystem fileSystem = kVFSObject.getFileSystem();
+    if (fileSystem instanceof HDFSFileSystem) {
+      HDFSFileSystem hdfsFileSystem = (HDFSFileSystem) fileSystem;
+      HadoopFileSystem hadoopFS = hdfsFileSystem.getHDFSFileSystem();
+      HadoopFileSystemPath hadoopPath = hadoopFS.getPath(meta.inputFiles.fileName[0]);
+      String realHDFSPath = hadoopPath.toUri();
+    }
+    
     data.input.setSplitSize( SPLIT_SIZE );
 
     data.splits = data.input.getSplits();
