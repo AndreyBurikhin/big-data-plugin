@@ -63,19 +63,26 @@ public class ParquetOutputDialog extends BaseParquetStepDialog<ParquetOutputMeta
   private static final Class<?> PKG = ParquetOutputMeta.class;
 
   private static final int SHELL_WIDTH = 698;
-  private static final int SHELL_HEIGHT = 554;
+  private static final int SHELL_HEIGHT = 620;
 
   private static final int COLUMNS_SEP = 5 * MARGIN;
 
   private TableView wOutputFields;
+
+  private Button wOverwriteExistingFile;
 
   private ComboVar wCompression;
   private ComboVar wVersion;
   private TextVar wRowSize;
   private TextVar wPageSize;
   private ComboVar wEncoding;
+  private TextVar wExtension;
   private TextVar wDictPageSize;
 
+  private Button wDictionaryEncoding;
+  private Button wIncludeDateInFilename;
+  private Button wIncludeTimeInFilename;
+  private Button wSpecifyDateTimeFormat;
 
   public ParquetOutputDialog( Shell parent, Object parquetOutputMeta, TransMeta transMeta, String sname ) {
     this( parent, (ParquetOutputMeta) parquetOutputMeta, transMeta, sname );
@@ -87,6 +94,11 @@ public class ParquetOutputDialog extends BaseParquetStepDialog<ParquetOutputMeta
   }
 
   protected Control createAfterFile( Composite afterFile ) {
+    wOverwriteExistingFile = new Button( afterFile, SWT.CHECK );
+    wOverwriteExistingFile.setText( BaseMessages.getString( PKG, "ParquetOutputDialog.OverwriteFile.Label" ) );
+    props.setLook( wOverwriteExistingFile );
+    new FD( wOverwriteExistingFile ).left( 0, 0 ).top( afterFile, FIELDS_SEP ).apply();
+
     CTabFolder wTabFolder = new CTabFolder( afterFile, SWT.BORDER );
     props.setLook( wTabFolder, Props.WIDGET_STYLE_TAB );
     wTabFolder.setSimple( false );
@@ -94,7 +106,7 @@ public class ParquetOutputDialog extends BaseParquetStepDialog<ParquetOutputMeta
     addFieldsTab( wTabFolder );
     addOptionsTab( wTabFolder );
 
-    new FD( wTabFolder ).left( 0, 0 ).top( 0, MARGIN ).right( 100, 0 ).bottom( 100, 0 ).apply();
+    new FD( wTabFolder ).left( 0, 0 ).top( wOverwriteExistingFile, MARGIN ).right( 100, 0 ).bottom( 100, 0 ).apply();
     wTabFolder.setSelection( 0 );
     return wTabFolder;
   }
@@ -200,26 +212,53 @@ public class ParquetOutputDialog extends BaseParquetStepDialog<ParquetOutputMeta
     new FD( wPageSize ).left( 0, 0 ).top( lDataPageSize, FIELD_LABEL_SEP ).width( FIELD_SMALL + VAR_EXTRA_WIDTH ).apply();
     setIntegerOnly( wPageSize );
 
+    wDictionaryEncoding = new Button( wComp, SWT.CHECK );
+    wDictionaryEncoding.setText( BaseMessages.getString( PKG, "ParquetOutputDialog.Options.DictionaryEncoding" ) );
+    props.setLook( wDictionaryEncoding );
+    new FD( wDictionaryEncoding ).left( 0, 0 ).top( wPageSize, FIELDS_SEP ).apply();
+
     Control leftRef = wCompression;
     // 2nd column
-    Label lEncoding = new Label( wComp, SWT.NONE );
-    lEncoding.setText( BaseMessages.getString( PKG, "ParquetOutputDialog.Options.Encoding" ) );
-    new FD( lEncoding ).left( leftRef, COLUMNS_SEP ).top( wComp, 0 ).apply();
-    wEncoding = createComboVar( wComp, meta.getEncodingTypes() );
-    new FD( wEncoding ).left( leftRef, COLUMNS_SEP ).top( lEncoding, FIELD_LABEL_SEP ).width( FIELD_SMALL + VAR_EXTRA_WIDTH ).apply();
+    Label lExtension = new Label( wComp, SWT.NONE );
+    lExtension.setText( BaseMessages.getString( PKG, "ParquetOutputDialog.Options.Extension" ) );
+    new FD( lExtension ).left( leftRef, COLUMNS_SEP ).top( wComp, 0 ).apply();
+    wExtension = new TextVar( transMeta, wComp, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    new FD( wExtension ).left( leftRef, COLUMNS_SEP ).top( lExtension, FIELD_LABEL_SEP )
+      .width( FIELD_SMALL + VAR_EXTRA_WIDTH ).apply();
 
-    Label lDict = new Label( wComp, SWT.NONE );
-    lDict.setText( BaseMessages.getString( PKG, "ParquetOutputDialog.Options.DictPageSize" ) );
-    new FD( lDict ).left( leftRef, COLUMNS_SEP ).top( wEncoding, FIELDS_SEP ).apply();
+    wIncludeDateInFilename = new Button( wComp, SWT.CHECK );
+    wIncludeDateInFilename.setText( BaseMessages.getString( PKG, "ParquetOutputDialog.Options.IncludeDateInFilename" ) );
+    props.setLook( wIncludeDateInFilename );
+    new FD( wIncludeDateInFilename ).left( leftRef, COLUMNS_SEP ).top( wExtension, MARGIN ).apply();
+
+    wIncludeTimeInFilename = new Button( wComp, SWT.CHECK );
+    wIncludeTimeInFilename.setText( BaseMessages.getString( PKG, "ParquetOutputDialog.Options.IncludeTimeInFilename" ) );
+    props.setLook( wIncludeTimeInFilename );
+    new FD( wIncludeTimeInFilename ).left( leftRef, COLUMNS_SEP ).top( wIncludeDateInFilename, FIELDS_SEP ).apply();
+
+    wSpecifyDateTimeFormat = new Button( wComp, SWT.CHECK );
+    wSpecifyDateTimeFormat.setText( BaseMessages.getString( PKG, "ParquetOutputDialog.Options.SpecifyDateTimeFormat" ) );
+    props.setLook( wSpecifyDateTimeFormat );
+    new FD( wSpecifyDateTimeFormat ).left( leftRef, COLUMNS_SEP ).top( wIncludeTimeInFilename, FIELDS_SEP ).apply();
+
+//    Label lEncoding = new Label( wComp, SWT.NONE );
+//    lEncoding.setText( BaseMessages.getString( PKG, "ParquetOutputDialog.Options.Encoding" ) );
+//    new FD( lEncoding ).left( leftRef, COLUMNS_SEP ).top( wComp, 0 ).apply();
+    wEncoding = createComboVar( wComp, meta.getEncodingTypes() );
+//    new FD( wEncoding ).left( leftRef, COLUMNS_SEP ).top( lEncoding, FIELD_LABEL_SEP ).width( FIELD_SMALL + VAR_EXTRA_WIDTH ).apply();
+//
+//    Label lDict = new Label( wComp, SWT.NONE );
+//    lDict.setText( BaseMessages.getString( PKG, "ParquetOutputDialog.Options.DictPageSize" ) );
+//    new FD( lDict ).left( leftRef, COLUMNS_SEP ).top( wEncoding, FIELDS_SEP ).apply();
     wDictPageSize = new TextVar( transMeta, wComp, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
-    new FD( wDictPageSize ).left( leftRef, COLUMNS_SEP ).top( lDict, FIELD_LABEL_SEP ).width( FIELD_SMALL + VAR_EXTRA_WIDTH ).apply();
-    setIntegerOnly( wDictPageSize );
-    wEncoding.addModifyListener( new ModifyListener() {
-      @Override
-      public void modifyText( ModifyEvent e ) {
-        wDictPageSize.setEnabled( wEncoding.getText().equals( ParquetOutputMeta.EncodingType.DICTIONARY.toString() ) );
-      }
-    } );
+//    new FD( wDictPageSize ).left( leftRef, COLUMNS_SEP ).top( lDict, FIELD_LABEL_SEP ).width( FIELD_SMALL + VAR_EXTRA_WIDTH ).apply();
+//    setIntegerOnly( wDictPageSize );
+//    wEncoding.addModifyListener( new ModifyListener() {
+//      @Override
+//      public void modifyText( ModifyEvent e ) {
+//        wDictPageSize.setEnabled( wEncoding.getText().equals( ParquetOutputMeta.EncodingType.DICTIONARY.toString() ) );
+//      }
+//    } );
   }
 
   protected ComboVar createComboVar( Composite container, String[] options ) {
